@@ -19,7 +19,7 @@ init_path = os.path.dirname(os.path.realpath(__file__))
 # Change this value with your target dir
 dest_path = '/var/spool/mail/'
 # Change this value with your script path
-script_path = '/script.sh'
+script_path = '/courier-dovecot-migrate.pl --to-dovecot --convert --recursive'
 ## ----------------------------------------------------------
 
 ## [Logging] ------------------------------------------------
