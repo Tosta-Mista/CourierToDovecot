@@ -16,9 +16,9 @@ from logging.handlers import RotatingFileHandler
 ## [Config VARS] --------------------------------------------
 # Don't change this value! :)
 init_path = os.path.dirname(os.path.realpath(__file__))
-# Change this value with your target dir
+# Change this value with your target dir (example : '/var/spool/mail')
 dest_path = '/var/spool/mail/'
-# Change this value with your script path
+# Change this value with your script path (example: '/script.sh')
 script_path = '/courier-dovecot-migrate.pl --to-dovecot --convert --recursive'
 ## ----------------------------------------------------------
 
