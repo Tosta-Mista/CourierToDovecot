@@ -54,7 +54,7 @@ print '===================================================='
 
 # Create a list with all directory
 output = subprocess.check_output(
-    'ls -R ' + init_path + dest_path + ' | grep "[[:alnum:]]\+@[[:alnum:]]\+" | tr ":" "/" | grep "/"', shell=True
+    'ls -R ' + dest_path + ' | grep "[[:alnum:]]\+@[[:alnum:]]\+" | tr ":" "/" | grep "/"', shell=True
 )
 # Transform the output to a list
 output = output.split()
