@@ -58,14 +58,16 @@ output = subprocess.check_output(
 )
 # Transform the output to a list
 output = output.split()
-obj = len(output)
-
+tot_obj = len(output)
+global obj
+obj = 0
 # Execute the script into all dir
 try:
     for path in output:
         os.chdir(path)
         logger.info('[Job] - Working on %s' % path)
         subprocess.call(init_path + script_path, shell=True)
+        obj += 1
 
 except SyntaxError:
     logger.error('SyntaxError, your target already exists.')
@@ -78,6 +80,6 @@ finally:
     os.chdir(init_path)
 
     print ''
-    print 'Number of objects handled : %s' % obj
+    print 'Number of directories parsed : %d / %d' % (obj, tot_obj)
     print 'Log file : %s' % logfile
     print '===================================================='
