@@ -1,6 +1,5 @@
-#!/usr/bin/env python2 
+#!/usr/bin/env python2
 # -*- coding: utf-8 -*-
-
 # -----------------------
 # Author : jgo
 # Execute a perl script into all mailbox newly created,
@@ -9,16 +8,16 @@
 
 import subprocess
 import os
+import re
 import logging
 from logging.handlers import RotatingFileHandler
-
 
 ## [Config VARS] --------------------------------------------
 # Don't change this value! :)
 init_path = os.path.dirname(os.path.realpath(__file__))
-# Change this value with your target dir
+# Change this value with your target dir (example : '/var/spool/mail')
 dest_path = '/var/spool/mail/'
-# Change this value with your script path
+# Change this value with your script path (example: '/script.sh')
 script_path = '/courier-dovecot-migrate.pl --to-dovecot --convert --recursive'
 ## ----------------------------------------------------------
 
@@ -33,7 +32,7 @@ logger.setLevel(logging.DEBUG)
 formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
 # Create a file (valhalla.log) in "append mode", max size => 30Mb
-# and 1 backup. 
+# and 1 backup.
 logfile = 'valhalla.log'
 file_handler = RotatingFileHandler(logfile, 'a', 30000000, 1)
 
@@ -54,11 +53,14 @@ print '===================================================='
 
 # Create a list with all directory
 output = subprocess.check_output(
-    'ls -R ' + init_path + dest_path + ' | grep "[[:alnum:]]\+@[[:alnum:]]\+" | tr ":" "/" | grep "/"', shell=True
-)
+    'ls -R ' + init_path + dest_path + ' | grep "[[:alnum:]]\+@[[:alnum:]]\+" | tr ":" "/" | grep "/"', shell=True)
+
 # Transform the output to a list
 output = output.split()
-obj = len(output)
+tot_obj = len(output)
+
+global obj
+obj = 0
 
 # Execute the script into all dir
 try:
@@ -66,18 +68,27 @@ try:
         os.chdir(path)
         logger.info('[Job] - Working on %s' % path)
         subprocess.call(init_path + script_path, shell=True)
-
+        obj += 1
 except SyntaxError:
     logger.error('SyntaxError, your target already exists.')
     print 'Please check your log file SyntaxError detected'
-
 except OSError:
     logger.error('OSError, this script can\'t be used on files')
     print 'Please check your log file OSError detected'
 finally:
     os.chdir(init_path)
+    
+    # Regex to get the domains :
+    with open(logfile, 'r') as f:
+        data = f.read()
+    f.close()
 
-    print ''
-    print 'Number of objects handled : %s' % obj
+    domain = re.findall("@[\w.]+", data, re.M|re.I)
+    domain_test = list(set(domain))
+
+    print '------------------------------------'
+    print 'Impacted domains : \n', domain_test
+    print '------------------------------------'
+    print 'Number of directories parsed : %d / %d' % (obj, tot_obj)
     print 'Log file : %s' % logfile
     print '===================================================='
