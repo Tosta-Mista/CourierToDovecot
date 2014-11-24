@@ -78,8 +78,17 @@ except OSError:
     print 'Please check your log file OSError detected'
 finally:
     os.chdir(init_path)
+ # Regex to get the domains :
+    with open(logfile, 'r') as f:
+        data = f.read()
+    f.close()
 
-    print ''
+    domain = re.findall("@[\w.]+", data, re.M|re.I)
+    domain_test = list(set(domain))
+
+    print '------------------------------------'
+    print 'Impacted domains : \n', domain_test
+    print '------------------------------------'
     print 'Number of directories parsed : %d / %d' % (obj, tot_obj)
     print 'Log file : %s' % logfile
     print '===================================================='
