@@ -5,7 +5,6 @@
 # Execute a perl script into all mailbox newly created,
 # on the Dovecot server.
 # -----------------------
-
 import subprocess
 import os
 import re
@@ -16,7 +15,7 @@ from logging.handlers import RotatingFileHandler
 # Don't change this value! :)
 init_path = os.path.dirname(os.path.realpath(__file__))
 # Change this value with your target dir (example : '/var/spool/mail')
-dest_path = 'var/spool/mail/'
+dest_path = '/var/spool/mail/'
 # Change this value with your script path (example: '/script.sh')
 script_path = '/courier-dovecot-migrate.pl --to-dovecot --convert --recursive'
 # Naem of the logfile
@@ -57,29 +56,33 @@ print '===================================================='
 
 
 # Create a list with all directory
-output = subprocess.check_output(
-    'ls -R ' + dest_path + ' | grep "[[:alnum:]]\+@[[:alnum:]]\+" | tr ":" "/" | grep "/"', shell=True)
+folderList = []
+for root, subFolder, files in os.walk(init_path+dest_path):
+    for folder in subFolder:
+        folderList.append(os.path.join(root, folder))
 
+#folderList = subprocess.check_output(
+#    'ls -R ' + init_path + dest_path + ' | grep "[[:alnum:]]\+@[[:alnum:]]\+" | tr ":" "/" | grep "/"', shell=True)
+#folderList = folderList.split()
 # Transform the output to a list
-output = output.split()
-tot_obj = len(output)
+tot_obj = len(folderList)
 
 global obj
 obj = 0
 
 # Execute the script into all dir
 try:
-    for path in output:
+    for path in folderList:
         os.chdir(path)
         logger.info('[Job] - Working on %s' % path)
-        #result = subprocess.call(init_path + script_path, shell=True)
-        #if result == 1 :
-        #    obj += 1
+        result = subprocess.call(init_path + script_path, shell=True)
+        if result == 1:
+            obj += 1
 except SyntaxError:
     logger.error('SyntaxError, your target already exists.')
     print 'Please check your log file SyntaxError detected'
 except OSError:
-    logger.error('OSError, this script can\'t be used on files')
+    logger.error('OSError, this script can\'t be used on files, check the your path variables(inside the script)')
     print 'Please check your log file OSError detected'
 finally:
     os.chdir(init_path)
@@ -89,28 +92,31 @@ finally:
         data = f.read()
     f.close()
     
-    mails = re.findall(r'[\w\.-]+@[\w\.-]+', data, re.M|re.I)
+    mails = re.findall(r'[\w\.-]+@[\w\.-]+', data, re.M | re.I)
     domains = re.findall(r'@([\w\.-]+)', data)
 
+    # Put into a set to sort my data
     domains = list(set(domains))
     mails = list(set(mails))
 
     with open(logfile, 'a') as f:
+        f.write("------------------------------------------------------------------------\n")
         f.write("E-mails who has been converted :\n")
         for mail in mails:
             f.write(mail + "\n")
-            f.write("\n" + "\n")
+
+        f.write("\n")
 
         f.write("Domains who has been converted :\n")
         for domain in domains:
-            f.write(domain +"\n")
-            f.write("\n" + "\n")
+            f.write(domain + "\n")
+
     f.close()
 
     print '------------------------------------'
-    print 'Impacted domains : \n', domains
-    print '------------------------------------'
     print 'Impacted e-mails : \n', mails
+    print '------------------------------------'
+    print 'Impacted domains : \n', domains
     print 'Number of directories parsed : %d / %d' % (obj, tot_obj)
     print 'Log file : %s' % logfile
     print '===================================================='
