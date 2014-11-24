@@ -16,7 +16,7 @@ from logging.handlers import RotatingFileHandler
 # Don't change this value! :)
 init_path = os.path.dirname(os.path.realpath(__file__))
 # Change this value with your target dir (example : '/var/spool/mail')
-dest_path = '/var/spool/mail/'
+dest_path = 'var/spool/mail/'
 # Change this value with your script path (example: '/script.sh')
 script_path = '/courier-dovecot-migrate.pl --to-dovecot --convert --recursive'
 # Naem of the logfile
@@ -72,9 +72,9 @@ try:
     for path in output:
         os.chdir(path)
         logger.info('[Job] - Working on %s' % path)
-        result = subprocess.call(init_path + script_path, shell=True)
-        if result == 1 :
-            obj += 1
+        #result = subprocess.call(init_path + script_path, shell=True)
+        #if result == 1 :
+        #    obj += 1
 except SyntaxError:
     logger.error('SyntaxError, your target already exists.')
     print 'Please check your log file SyntaxError detected'
