@@ -19,7 +19,12 @@ init_path = os.path.dirname(os.path.realpath(__file__))
 dest_path = '/var/spool/mail/'
 # Change this value with your script path (example: '/script.sh')
 script_path = '/courier-dovecot-migrate.pl --to-dovecot --convert --recursive'
+# Naem of the logfile
+logfile = 'valhalla.log'
 ## ----------------------------------------------------------
+
+# Cleaning old log file :
+subprocess.call('rm -rf ' + init_path + "/" + logfile, shell=True)
 
 ## [Logging] ------------------------------------------------
 # Create logger object used to write logfile
@@ -33,7 +38,6 @@ formatter = logging.Formatter('%(asctime)s :: %(levelname)s :: %(message)s')
 
 # Create a file (valhalla.log) in "append mode", max size => 30Mb
 # and 1 backup.
-logfile = 'valhalla.log'
 file_handler = RotatingFileHandler(logfile, 'a', 30000000, 1)
 
 # Assign our formatter and set to debug mode.
@@ -51,6 +55,7 @@ print '===================================================='
 print '[SCRIPT STATUS]'
 print '===================================================='
 
+
 # Create a list with all directory
 output = subprocess.check_output(
     'ls -R ' + init_path + dest_path + ' | grep "[[:alnum:]]\+@[[:alnum:]]\+" | tr ":" "/" | grep "/"', shell=True)
@@ -67,8 +72,9 @@ try:
     for path in output:
         os.chdir(path)
         logger.info('[Job] - Working on %s' % path)
-        subprocess.call(init_path + script_path, shell=True)
-        obj += 1
+        result = subprocess.call(init_path + script_path, shell=True)
+        if result == 1 :
+            obj += 1
 except SyntaxError:
     logger.error('SyntaxError, your target already exists.')
     print 'Please check your log file SyntaxError detected'
@@ -77,18 +83,34 @@ except OSError:
     print 'Please check your log file OSError detected'
 finally:
     os.chdir(init_path)
-    
+
     # Regex to get the domains :
     with open(logfile, 'r') as f:
         data = f.read()
     f.close()
+    
+    mails = re.findall(r'[\w\.-]+@[\w\.-]+', data, re.M|re.I)
+    domains = re.findall(r'@([\w\.-]+)', data)
 
-    domain = re.findall("@[\w.]+", data, re.M|re.I)
-    domain_test = list(set(domain))
+    domains = list(set(domains))
+    mails = list(set(mails))
+
+    with open(logfile, 'a') as f:
+        f.write("E-mails who has been converted :\n")
+        for mail in mails:
+            f.write(mail + "\n")
+            f.write("\n" + "\n")
+
+        f.write("Domains who has been converted :\n")
+        for domain in domains:
+            f.write(domain +"\n")
+            f.write("\n" + "\n")
+    f.close()
 
     print '------------------------------------'
-    print 'Impacted domains : \n', domain_test
+    print 'Impacted domains : \n', domains
     print '------------------------------------'
+    print 'Impacted e-mails : \n', mails
     print 'Number of directories parsed : %d / %d' % (obj, tot_obj)
     print 'Log file : %s' % logfile
     print '===================================================='
