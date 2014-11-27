@@ -52,9 +52,10 @@ steam_handler.setLevel(logging.DEBUG)
 logger.addHandler(steam_handler)
 ## ----------------------------------------------------------
 
-print '===================================================='
-print '[SCRIPT STATUS]'
-print '===================================================='
+print '+------------------------------------------------------------+'
+print '| [SCRIPT STATUS]                                            |'
+print '+------------------------------------------------------------+'
+print '| *** Main thread waiting ***'
 
 # Create a list with all directory
 folderList = []
@@ -84,7 +85,7 @@ def get_domains(init_path, logfile):
     mails = list(set(mails))
 
     with open(init_path+"/"+logfile, 'a') as f:
-        f.write("------------------------------------------------------------------------\n")
+        f.write("+------------------------------------------------------------------------\n")
         f.write("E-mails who has been converted :\n")
         for mail in mails:
             f.write(mail + "\n")
@@ -97,13 +98,17 @@ def get_domains(init_path, logfile):
 
     f.close()
 
-    print """---------------------------------------
-Impacted e-mails : %s
----------------------------------------
-Impacted domains : %s
-Number of directories parsed : %d / %d'
-Log file : %s'
-====================================================""" % (mails, domains, obj, tot_obj, logfile)
+    print """+------------------------------------------------------------+
+|
+| Impacted e-mails : %s
+|
++------------------------------------------------------------+
+| Impacted domains : %s
+|
+| Number of directories parsed : %d / %d'
+|
+| Log file : %s'
++------------------------------------------------------------+""" % (mails, domains, obj, tot_obj, logfile)
 
 
 #define a worker function
@@ -116,24 +121,27 @@ def worker(queue):
             #get your data off the queue, and do some work
             path = queue.get(False)
             os.chdir(path)
-            logger.info('[Job] - Working on %s' % path)
-            result = subprocess.call(init_path + script_path, shell=True)
+            logger.info('| [Queuing] --> %s' % path)
+            result = subprocess.call(init_path + script_path+' 2> /dev/null ', shell=True)
             q.task_done()
-            if result == 1:
+            logger.info('| [Converted] --> %s' % path)
+            if result == 0:
                 obj += 1
 
         except Queue.Empty:
-            queue_full = False
+            break
 
 
 #create as many threads as you want
 thread_count = 10
-print '*** Main thread waiting'
 for i in range(thread_count):
     t = threading.Thread(target=worker, args=(q,))
     t.start()
 
 q.join()
 get_domains(init_path, logfile)
-print '*** Done'
+print """+---------+
+|  Done ! |
++---------+
+"""
 
