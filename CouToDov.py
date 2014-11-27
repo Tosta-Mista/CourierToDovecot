@@ -3,7 +3,7 @@
 # -----------------------
 # Author : jgo
 # Execute a perl script into all mailbox newly created,
-# on the Dovecot server.
+# into the Dovecot server.
 # -----------------------
 __author__ = 'jgo'
 import logging
